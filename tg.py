@@ -32,7 +32,10 @@ def is_valid_link(link):
 @app.on_message(pyrogram.filters.command("start") & ~pyrogram.filters.channel)
 def start(client, message):
 
-    printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] started the bot.")
+    try:
+        printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] started the bot.")
+    except Exception:
+        printlog(f"{message.from_user.id} started the bot.")
 
     # Send a greeting message to the user
     message.reply("Hello! Send me a wallpaper that you want to submit.")
@@ -50,7 +53,11 @@ def handle_document(client, message):
         message.reply(f"Sorry for the inconvenience. You are not allowed to send wallpapers. If you think this is a mistake, you can appeal in {group_username}")
         return
     
-    printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] sent a document.")
+    try:
+        printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] sent a document.")
+    except Exception:
+        printlog(f"{message.from_user.id} sent a document.")
+
     sleep(5)
     messagePost = message.reply("Added to queue. Please wait.").id
 
@@ -134,7 +141,10 @@ def handle_document(client, message):
             app.edit_message_text(chat_id=message.chat.id, message_id=messagePost, text="An error occured. Please try again later.")
             return
         app.edit_message_text(chat_id=message.chat.id, message_id=messagePost, text="Thank you for your submission. Please wait for the verification.")
-        printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] made a wallpaper request.")
+        try:
+            printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] made a wallpaper request.")
+        except Exception:
+            printlog(f"{message.from_user.id} made a wallpaper request.")
         myFile = open("done.txt", "w+")
         myFile.close()
         return
@@ -166,10 +176,17 @@ def handle_document(client, message):
         sleep(5)
 
         app.edit_message_text(chat_id=message.chat.id, message_id=messagePost, text="Wallpaper posted.")
-        printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] posted a wallpaper.")
+        try:
+            printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] posted a wallpaper.")
+        except Exception:
+            printlog(f"{message.from_user.id} posted a wallpaper.")
+            
     except Exception:
         app.edit_message_text(chat_id=message.chat.id, message_id=messagePost, text="An error occured. Please try again later.")
-        printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] had an error.")
+        try:
+            printlog(f"{app.get_users(message.from_user.id).first_name} [@{app.get_users(message.from_user.id).username}][{message.from_user.id}] had an error.")
+        except Exception:
+            printlog(f"{message.from_user.id} had an error.")
 
     myFile = open("done.txt", "w+")
     myFile.close()
