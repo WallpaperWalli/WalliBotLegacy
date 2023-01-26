@@ -1,0 +1,10 @@
+api_id = "Enter API ID"
+api_hash = "Enter API Hash"
+admin_list = [id1, id2, id3, id4]
+ignore_list = [id1, id2, id3, id4]
+token = "Bot Token"
+request_id = Admin/Admin Group ID
+post_id = Channel/Group ID
+group_username = "Group Username"
+watermark = "Watermark Username"
+bot_name = "Any Random Name for your bot"
