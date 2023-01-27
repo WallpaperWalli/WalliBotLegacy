@@ -4,9 +4,8 @@ import sys
 import urllib.parse
 from datetime import datetime
 from io import BytesIO
-from random import choices, randint
+from random import randint
 from shutil import rmtree
-from string import ascii_letters
 from time import time
 import aiohttp
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
