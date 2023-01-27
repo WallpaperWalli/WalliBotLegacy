@@ -156,7 +156,7 @@ async def poster():
             resize = await resizer(file_path)
             await app.send_photo(chat_id=post_id, photo=resize, caption=caption)
             await asyncio.sleep(3)
-        await document.copy(chat_id=post_id, caption=caption)
+        await document.copy(chat_id=post_id)
         await response.edit("Wallpaper posted.")
         if os.path.exists(download_path):
             rmtree(download_path)
