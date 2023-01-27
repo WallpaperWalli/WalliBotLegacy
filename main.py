@@ -100,7 +100,7 @@ async def handle_document(client, message):
             tag = "#mobile"
         else:
             tag = "#universal"
-        await response.edit("Added to post queue...")
+        await response.edit("Processing...")
         post_list.append(
             {
                 "response": response,
