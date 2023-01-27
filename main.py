@@ -8,7 +8,6 @@ from random import choices, randint
 from shutil import rmtree
 from string import ascii_letters
 from time import time
-
 import aiohttp
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from PIL import Image, ImageFile
@@ -22,7 +21,6 @@ aio_session = None
 post_list = []
 #recent_users = []
 scheduler = AsyncIOScheduler()
-
 
 @app.on_message(
     (filters.command("start", prefixes="/") | filters.photo) & ~filters.channel
@@ -44,7 +42,6 @@ async def start(client, message):
             "Hello! Send me a wallpaper that you want to submit as a document.", quote=True
         )
 
-
 @app.on_message(filters.document & ~filters.channel)
 async def handle_document(client, message):
     """ User information """
@@ -54,6 +51,7 @@ async def handle_document(client, message):
         user.id,
         f"[@{user.username}]" if user.username else "",
     )
+
     """ Stop execution if user is in ignore list """
     if u_id in ignore_list:
         await asyncio.sleep(randint(1, 5))
@@ -61,20 +59,24 @@ async def handle_document(client, message):
             f"Sorry for the inconvenience. You are not allowed to send wallpapers. If you think this is a mistake, you can appeal in {group_username}", quote=True
         )
         return
+
     """ Anti-Spam Check to process one file at a time from one user """
     #if u_id in recent_users:
         #await asyncio.sleep(4)
         #return await message.reply("Send one wallpaper at a time.", quote=True)
     #else:
         #recent_users.append(u_id)
+
     printlog(f"{u_name} {username} [{u_id}] sent a document.")
     await asyncio.sleep(randint(1,8))
     response = await message.reply("Added to queue. Please wait.", quote=True)
+
     """ Check if the user has Admin privileges """
     if u_id in admin_list:
         isadmin = True
     else:
         isadmin = False
+
     if message.document.file_name in files_list:
         if not isadmin:
             await response.edit(
@@ -83,9 +85,10 @@ async def handle_document(client, message):
             return
     else:
         files_list.append(message.document.file_name)
-    """ If the user is Admin then que the post otherwise send the document for verification """
+
+    """ If the user is Admin then queue the post otherwise send the document for verification """
     if isadmin:
-        file_name = message.document.file_name
+        file_name = "".join(choices(ascii_letters, k=10)) + f"-{watermark}" + os.path.splitext(message.document.file_name)[1]
         download_path = os.path.join("downloads", str(time()))
         file_path = os.path.join(download_path, file_name)
         await message.download(file_path)
@@ -97,7 +100,7 @@ async def handle_document(client, message):
             tag = "#mobile"
         else:
             tag = "#universal"
-        await response.edit("Added to post que...")
+        await response.edit("Added to post queue...")
         post_list.append(
             {
                 "response": response,
@@ -108,6 +111,7 @@ async def handle_document(client, message):
             }
         )
         printlog(f"{u_name} {username} [{u_id}] posted a wallpaper.")
+
     else:
         # upload = await gofiles(file_path)
         # if upload == "failed":
@@ -158,7 +162,6 @@ async def poster():
             rmtree(download_path)
         post_list.pop(0)
 
-
 async def resizer(file):
     """ Resize Photo to fit Telegram's size restrictions """
     img = Image.open(file).convert("RGB")
@@ -207,7 +210,7 @@ async def boot():
     await app.start()
     #global aio_session
     #aio_session = aiohttp.ClientSession()
-    scheduler.add_job(poster, "interval", seconds=30)
+    scheduler.add_job(poster, "interval", seconds=10)
     scheduler.start()
     printlog("Client Started, Idling....")
     await idle()
