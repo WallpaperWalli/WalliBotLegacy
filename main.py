@@ -205,8 +205,8 @@ async def boot():
     """
     printlog("Client initialized..")
     await app.start()
-    global aio_session
-    aio_session = aiohttp.ClientSession()
+    #global aio_session
+    #aio_session = aiohttp.ClientSession()
     scheduler.add_job(poster, "interval", seconds=30)
     scheduler.start()
     printlog("Client Started, Idling....")
