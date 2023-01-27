@@ -88,7 +88,7 @@ async def handle_document(client, message):
 
     """ If the user is Admin then queue the post otherwise send the document for verification """
     if isadmin:
-        file_name = "".join(choices(ascii_letters, k=10)) + f"-{watermark}" + os.path.splitext(message.document.file_name)[1]
+        file_name = message.document.file_name
         download_path = os.path.join("downloads", str(time()))
         file_path = os.path.join(download_path, file_name)
         await message.download(file_path)
@@ -108,6 +108,7 @@ async def handle_document(client, message):
                 "file_path": file_path,
                 "caption": tag,
                 "document": message,
+                "file_name": file_name
             }
         )
         printlog(f"{u_name} {username} [{u_id}] posted a wallpaper.")
@@ -142,8 +143,9 @@ async def poster():
     if len(post_list) > 0:
         upload, resize = None, None
         data = post_list[0]
-        file_path, download_path, caption, response, document = (
+        file_path, file_name, download_path, caption, response, document = (
             data["file_path"],
+            data["file_name"],
             data["path"],
             data["caption"],
             data["response"],
@@ -153,7 +155,7 @@ async def poster():
             await app.send_photo(chat_id=post_id, photo=file_path, caption=caption)
             await asyncio.sleep(3)
         except (PhotoInvalidDimensions, PhotoSaveFileInvalid):
-            resize = await resizer(file_path)
+            resize = await resizer(file=file_path,name=file_name)
             await app.send_photo(chat_id=post_id, photo=resize, caption=caption)
             await asyncio.sleep(3)
         await document.copy(chat_id=post_id)
@@ -162,7 +164,7 @@ async def poster():
             rmtree(download_path)
         post_list.pop(0)
 
-async def resizer(file):
+async def resizer(file, name):
     """ Resize Photo to fit Telegram's size restrictions """
     img = Image.open(file).convert("RGB")
     comp_file = BytesIO()
@@ -183,7 +185,7 @@ async def resizer(file):
         if img.width > 3840 or img.height > 3840:
             img = img.resize((3840, 3840), Image.LANCZOS)
         img.save(comp_file, format="JPEG", optimize=True, quality=95)
-    comp_file.name = "".join(choices(ascii_letters, k=10)) + f"-{watermark}" + ".jpeg"
+    comp_file.name = name + ".jpeg"
     return comp_file
 
 
