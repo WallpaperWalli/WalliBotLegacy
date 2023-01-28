@@ -120,7 +120,7 @@ async def handle_document(client, message):
         # )
         await asyncio.sleep(2)
         await message.copy(
-            chat_id=request_id, caption=f"Check the wallpaper and resend to bot.\n\nSent By <a href='tg://user?id={u_id}'>{u_name}</a>"
+            chat_id=request_id, caption=f"Check the wallpaper and resend to bot.\n\nSent By <a href='tg://user?id={u_id}'>{u_name}</a> [{u_id}]"
         )
         await asyncio.sleep(2)
         await response.edit(
@@ -135,7 +135,6 @@ async def restart(client, message):
     """ Stop Scheduler and Restart bot when an Admin sends a restart command. """
     scheduler.shutdown()
     os.execl(sys.executable, sys.executable, __file__)
-
 
 async def poster():
     """ The logic function to handle posts without getting interrupted from other submissions """
