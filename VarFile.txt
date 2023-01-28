@@ -6,5 +6,4 @@ token = "Bot Token"
 request_id = Admin/Admin Group ID
 post_id = Channel/Group ID
 group_username = "Group Username"
-watermark = "Watermark Username"
 bot_name = "Any Random Name for your bot"
