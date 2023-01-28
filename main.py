@@ -120,7 +120,7 @@ async def handle_document(client, message):
         # )
         await asyncio.sleep(2)
         await message.copy(
-            chat_id=request_id, caption=f"Check the wallpaper and resend to bot."
+            chat_id=request_id, caption=f"Check the wallpaper and resend to bot.\n\nSent By <a href='tg://user?id={u_id}'>{u_name}</a>"
         )
         await asyncio.sleep(2)
         await response.edit(
