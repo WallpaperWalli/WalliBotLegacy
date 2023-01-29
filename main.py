@@ -35,7 +35,12 @@ async def start(client, message):
             user.id,
             f"@[{user.username}]" if user.username else "",
         )
-        printlog(f"{name} {username} [{id}] started the bot.")
+
+        try:
+            printlog(f"{name} {username} [{id}] started the bot.")
+        except Exception:
+            printlog(f"{id} started the bot.")
+            
         # Send a greeting message to the user
         await message.reply(
             "Hello! Send me a wallpaper that you want to submit as a document.", quote=True
@@ -66,7 +71,11 @@ async def handle_document(client, message):
     #else:
         #recent_users.append(u_id)
 
-    printlog(f"{u_name} {username} [{u_id}] sent a document.")
+    try:
+        printlog(f"{u_name} {username} [{u_id}] sent a document.")
+    except Exception:
+        printlog(f"{u_id} sent a document.")
+
     await asyncio.sleep(randint(1,8))
     response = await message.reply("Added to queue. Please wait.", quote=True)
 
@@ -110,8 +119,11 @@ async def handle_document(client, message):
                 "file_name": file_name
             }
         )
-        printlog(f"{u_name} {username} [{u_id}] posted a wallpaper.")
 
+        try:
+            printlog(f"{u_name} {username} [{u_id}] posted a wallpaper.")
+        except Exception:
+            printlog(f"{u_id} posted a wallpaper.")
     else:
         # upload = await gofiles(file_path)
         # if upload == "failed":
@@ -120,13 +132,17 @@ async def handle_document(client, message):
         # )
         await asyncio.sleep(2)
         await message.copy(
-            chat_id=request_id, caption=f"Check the wallpaper and resend to bot."
+            chat_id=request_id, caption=f"Check the wallpaper and resend to bot.\n\nSent By <a href='tg://user?id={u_id}'>{u_name}</a> [{u_id}]"
         )
         await asyncio.sleep(2)
         await response.edit(
             "Thank you for your submission. Please wait for the verification."
         )
-        printlog(f"{u_name} {username} [{u_id}] made a wallpaper request.")
+
+        try:
+            printlog(f"{u_name} {username} [{u_id}] made a wallpaper request.")
+        except Exception:
+            printlog(f"{u_id} made a wallpaper request.")
     #recent_users.remove(u_id)
 
 
@@ -135,8 +151,7 @@ async def restart(client, message):
     """ Stop Scheduler and Restart bot when an Admin sends a restart command. """
     scheduler.shutdown()
     os.execl(sys.executable, sys.executable, __file__)
-
-
+    
 async def poster():
     """ The logic function to handle posts without getting interrupted from other submissions """
     if len(post_list) > 0:
@@ -157,7 +172,7 @@ async def poster():
             resize = await resizer(file=file_path,name=file_name)
             await app.send_photo(chat_id=post_id, photo=resize, caption=caption)
             await asyncio.sleep(3)
-        await document.copy(chat_id=post_id)
+        await document.copy(chat_id=post_id, caption="")
         await response.edit("Wallpaper posted.")
         if os.path.exists(download_path):
             rmtree(download_path)
