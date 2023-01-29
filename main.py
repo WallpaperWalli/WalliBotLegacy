@@ -35,7 +35,10 @@ async def start(client, message):
             user.id,
             f"@[{user.username}]" if user.username else "",
         )
-        printlog(f"{name} {username} [{id}] started the bot.")
+        try:
+            printlog(f"{name} {username} [{id}] started the bot.")
+        except Exception:
+            printlog(f"{id} started the bot.")
         # Send a greeting message to the user
         await message.reply(
             "Hello! Send me a wallpaper that you want to submit as a document.", quote=True
@@ -65,8 +68,11 @@ async def handle_document(client, message):
         #return await message.reply("Send one wallpaper at a time.", quote=True)
     #else:
         #recent_users.append(u_id)
+    try:
+        printlog(f"{u_name} {username} [{u_id}] sent a document.")
+    except Exception:
+        printlog(f"{u_id} sent a document.")
 
-    printlog(f"{u_name} {username} [{u_id}] sent a document.")
     await asyncio.sleep(randint(1,8))
     response = await message.reply("Added to queue. Please wait.", quote=True)
 
@@ -110,7 +116,10 @@ async def handle_document(client, message):
                 "file_name": file_name
             }
         )
-        printlog(f"{u_name} {username} [{u_id}] posted a wallpaper.")
+        try:
+            printlog(f"{u_name} {username} [{u_id}] posted a wallpaper.")
+        except Exception:
+            printlog(f"{u_id} posted a wallpaper.")
 
     else:
         # upload = await gofiles(file_path)
@@ -126,7 +135,10 @@ async def handle_document(client, message):
         await response.edit(
             "Thank you for your submission. Please wait for the verification."
         )
-        printlog(f"{u_name} {username} [{u_id}] made a wallpaper request.")
+        try:
+            printlog(f"{u_name} {username} [{u_id}] made a wallpaper request.")
+        except Exception:
+            printlog(f"{u_id} made a wallpaper request.")
     #recent_users.remove(u_id)
 
 
@@ -156,7 +168,7 @@ async def poster():
             resize = await resizer(file=file_path,name=file_name)
             await app.send_photo(chat_id=post_id, photo=resize, caption=caption)
             await asyncio.sleep(3)
-        await document.copy(chat_id=post_id)
+        await document.copy(chat_id=post_id, caption="")
         await response.edit("Wallpaper posted.")
         if os.path.exists(download_path):
             rmtree(download_path)
