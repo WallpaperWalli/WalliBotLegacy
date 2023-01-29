@@ -35,10 +35,12 @@ async def start(client, message):
             user.id,
             f"@[{user.username}]" if user.username else "",
         )
+
         try:
             printlog(f"{name} {username} [{id}] started the bot.")
         except Exception:
             printlog(f"{id} started the bot.")
+            
         # Send a greeting message to the user
         await message.reply(
             "Hello! Send me a wallpaper that you want to submit as a document.", quote=True
@@ -68,6 +70,7 @@ async def handle_document(client, message):
         #return await message.reply("Send one wallpaper at a time.", quote=True)
     #else:
         #recent_users.append(u_id)
+
     try:
         printlog(f"{u_name} {username} [{u_id}] sent a document.")
     except Exception:
@@ -116,11 +119,11 @@ async def handle_document(client, message):
                 "file_name": file_name
             }
         )
+
         try:
             printlog(f"{u_name} {username} [{u_id}] posted a wallpaper.")
         except Exception:
             printlog(f"{u_id} posted a wallpaper.")
-
     else:
         # upload = await gofiles(file_path)
         # if upload == "failed":
@@ -135,6 +138,7 @@ async def handle_document(client, message):
         await response.edit(
             "Thank you for your submission. Please wait for the verification."
         )
+
         try:
             printlog(f"{u_name} {username} [{u_id}] made a wallpaper request.")
         except Exception:
@@ -147,7 +151,7 @@ async def restart(client, message):
     """ Stop Scheduler and Restart bot when an Admin sends a restart command. """
     scheduler.shutdown()
     os.execl(sys.executable, sys.executable, __file__)
-
+    
 async def poster():
     """ The logic function to handle posts without getting interrupted from other submissions """
     if len(post_list) > 0:
