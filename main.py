@@ -247,7 +247,7 @@ def printlog(message):
     if not os.path.exists("logs"):
         os.makedirs("logs")
     # Open log file to write log, if file doesn't exist, create one.
-    with open((os.path.join("logs", f"{current_date}.log")), "a+") as log:
+    with open((os.path.join("logs", f"{current_date}.log")), "a+", encoding="utf-8") as log:
         log.write(f"[{current_time}] {message}\n")
 
 """ To prevent accidental startup of bot. """
