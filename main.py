@@ -51,7 +51,7 @@ async def start(client, message):
 
 @app.on_message(filters.document & ~filters.channel & ~filters.user(admin_list))
 async def handle_document(client, message):
-   """ Don't respond if the document is not a picture """
+    """ Don't respond if the document is not a picture """
     if not message.document.file_name.lower().endswith(
         (".png", ".jpg", ".jpeg", ".jfif")
     ):
@@ -187,6 +187,7 @@ async def poster():
             await asyncio.sleep(3)
         await data.copy(chat_id=post_id, caption="")
         if os.path.exists(download_path):
+            img.close()
             rmtree(download_path)
         post_list.pop(0)
 
@@ -213,6 +214,7 @@ async def resizer(file, name):
             img = img.resize((3840, 3840), Image.LANCZOS)
         img.save(comp_file, format="JPEG", optimize=True, quality=95)
     comp_file.name = name + ".jpeg"
+    img.close()
     return comp_file
 
 
