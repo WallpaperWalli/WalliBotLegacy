@@ -171,13 +171,13 @@ async def poster():
         file_path = os.path.join(download_path, file_name)
         await data.download(file_path)
         ImageFile.LOAD_TRUNCATED_IMAGES = True
-        img = Image.open(file_path)
-        if img.width > img.height:
-            caption = "#desktop"
-        elif img.width < img.height:
-            caption = "#mobile"
-        else:
-            caption = "#universal"
+        with Image.open(file_path) as img:
+            if img.width > img.height:
+                caption = "#desktop"
+            elif img.width < img.height:
+                caption = "#mobile"
+            else:
+                caption = "#universal"
         try:
             await app.send_photo(chat_id=post_id, photo=file_path, caption=caption)
             await asyncio.sleep(3)
@@ -186,7 +186,6 @@ async def poster():
             await app.send_photo(chat_id=post_id, photo=resize, caption=caption)
             await asyncio.sleep(3)
         await data.copy(chat_id=post_id, caption="")
-        img.close()
         if os.path.exists(download_path):
             rmtree(download_path)
         post_list.pop(0)
@@ -194,28 +193,24 @@ async def poster():
 
 async def resizer(file, name):
     """Resize Photo to fit Telegram's size restrictions"""
-    img = Image.open(file).convert("RGB")
-    comp_file = BytesIO()
-    if img.width > img.height:
-        tag = "#desktop"
-        if img.width > 3840:
-            aspect_ratio = img.width / img.height
-            img = img.resize((3840, int(3840 / aspect_ratio)), Image.LANCZOS)
-        img.save(comp_file, format="JPEG", optimize=True, quality=95)
-    elif img.width < img.height:
-        tag = "#mobile"
-        if img.height > 3840:
-            aspect_ratio = img.height / img.width
-            img = img.resize((int(3840 / aspect_ratio), 3840), Image.LANCZOS)
-        img.save(comp_file, format="JPEG", optimize=True, quality=95)
-    else:
-        tag = "#universal"
-        if img.width > 3840 or img.height > 3840:
-            img = img.resize((3840, 3840), Image.LANCZOS)
-        img.save(comp_file, format="JPEG", optimize=True, quality=95)
-    comp_file.name = name + ".jpeg"
-    img.close()
-    return comp_file
+    with Image.open(file).convert("RGB") as img:
+        comp_file = BytesIO()
+        if img.width > img.height:
+            if img.width > 3840:
+                aspect_ratio = img.width / img.height
+                img = img.resize((3840, int(3840 / aspect_ratio)), Image.LANCZOS)
+            img.save(comp_file, format="JPEG", optimize=True, quality=95)
+        elif img.width < img.height:
+            if img.height > 3840:
+                aspect_ratio = img.height / img.width
+                img = img.resize((int(3840 / aspect_ratio), 3840), Image.LANCZOS)
+            img.save(comp_file, format="JPEG", optimize=True, quality=95)
+        else:
+            if img.width > 3840 or img.height > 3840:
+                img = img.resize((3840, 3840), Image.LANCZOS)
+            img.save(comp_file, format="JPEG", optimize=True, quality=95)
+        comp_file.name = name + ".jpeg"
+        return comp_file
 
 
 """ Bot section """
