@@ -186,8 +186,8 @@ async def poster():
             await app.send_photo(chat_id=post_id, photo=resize, caption=caption)
             await asyncio.sleep(3)
         await data.copy(chat_id=post_id, caption="")
+        img.close()
         if os.path.exists(download_path):
-            img.close()
             rmtree(download_path)
         post_list.pop(0)
 
