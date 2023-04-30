@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import sys
 from datetime import datetime
@@ -8,27 +9,37 @@ from shutil import rmtree
 from time import time
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from dotenv import load_dotenv
 from PIL import Image, ImageFile
 from pyrogram import Client, filters, idle
 from pyrogram.errors import PhotoInvalidDimensions, PhotoSaveFileInvalid
 
-from VarFile import *
+if os.path.isfile("VarFile.env"):
+    load_dotenv("VarFile.env")
 
-app = Client(bot_name, api_id, api_hash, bot_token=token, in_memory=True)
+app = Client(
+    name=os.environ.get("BOT_NAME"),
+    api_id=os.environ.get("API_ID"),
+    api_hash=os.environ.get("API_HASH"),
+    bot_token=os.environ.get("BOT_TOKEN"),
+    in_memory=True,
+)
 files_list = []
-aio_session = None
 post_list = []
 users_dict = {}
 scheduler = AsyncIOScheduler()
+post_id = os.environ.get("POST_ID")
+admin_list = json.loads(os.environ.get("ADMIN_LIST",""))
+ignore_list = json.loads(os.environ.get("IGNORE_LIST",""))
+group_username = os.environ.get("GROUP_USERNAME", "")
 
-
-""" User Section """
+# User Section 
 
 
 @app.on_message(filters.command("start", prefixes="/") & ~filters.channel)
 async def start(client, message):
     user = message.from_user
-    name, id, username = (user.first_name, user.id, f"@[{user.username}]" if user.username else "")
+    name, id, username = (user.first_name, user.id, f"@{user.username}" if user.username else "")
 
     printlog(f"{name} {username} [{id}] started the bot.")
 
@@ -70,7 +81,8 @@ async def handle_document(client, message):
     else:
         files_list.append(message.document.file_name)
     await message.copy(
-        chat_id=request_id, caption=f"Check the wallpaper and resend to bot.\n\nSent By [ <a href='tg://user?id={user_id}'>{user_id}</a> ]"
+        chat_id=os.environ.get("REQUEST_ID"),
+        caption=f"Check the wallpaper and resend to bot.\n\nSent By [ <a href='tg://user?id={user_id}'>{user_id}</a> ]",
     )
     await asyncio.sleep(randint(1, 8))
     await message.reply("Thank you for your submission. Please wait for the verification.", quote=True)
@@ -93,7 +105,7 @@ def check_perm(user):
     return True
 
 
-""" Admin section """
+# Admin section
 
 
 @app.on_message(filters.command("restart", prefixes="/") & filters.user(admin_list))
@@ -117,7 +129,7 @@ async def add_post(app, message):
         return await message.reply("Reply to a document.")
     await message.reply("Added to Queue")
     user = message.from_user
-    user_name, user_id, username = (user.first_name, user.id, f"[@{user.username}]" if user.username else "")
+    user_name, user_id, username = (user.first_name, user.id, f"@{user.username}" if user.username else "")
     printlog(f"{user_name} {username} [{user_id}] posted a wallpaper.")
 
 
@@ -173,15 +185,13 @@ async def resizer(file, name):
         return comp_file
 
 
-""" Bot section """
+#Bot section
 
 
 async def boot():
-    """
-    Start bot, setup client session for gofile requests
-    Start Scheduler to call post function every 30 seconds
-    Wait idle to receive commands / submissions
-    """
+    #Start bot
+    #Start Scheduler to call post function every 30 seconds
+    #Wait idle to receive commands / submissions
     printlog("Client initialized..")
     await app.start()
     scheduler.add_job(poster, "interval", seconds=30)
@@ -201,6 +211,6 @@ def printlog(message):
         log.write(f"[{current_time}] {message}\n")
 
 
-""" To prevent accidental startup of bot. """
+# To prevent accidental startup of bot.
 if __name__ == "__main__":
     app.run(boot())

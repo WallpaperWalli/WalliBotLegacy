@@ -3,4 +3,7 @@
 !main.py
 !.gitignore
 !README.md
-!VarFile.txt
+!Sample_VarFile.env
+!requirements.txt
+!Dockerfile
+!run
