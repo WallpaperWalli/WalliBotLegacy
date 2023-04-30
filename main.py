@@ -1,16 +1,16 @@
 import asyncio
 import os
 import sys
-import urllib.parse
 from datetime import datetime
 from io import BytesIO
 from random import randint
 from shutil import rmtree
 from time import time
-import aiohttp
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from PIL import Image, ImageFile
 from pyrogram import Client, filters, idle
+from pyrogram.enums import ChatType
 from pyrogram.errors import PhotoInvalidDimensions, PhotoSaveFileInvalid
 from VarFile import *
 
@@ -18,14 +18,18 @@ app = Client(bot_name, api_id, api_hash, bot_token=token, in_memory=True)
 files_list = []
 aio_session = None
 post_list = []
-#recent_users = []
+users_dict = {}
 scheduler = AsyncIOScheduler()
+
+
+""" User Section """
+
 
 @app.on_message(
     (filters.command("start", prefixes="/") | filters.photo) & ~filters.channel
 )
 async def start(client, message):
-    """ Check if a user sent a photo or start command and respond accordingly """
+    """Check if a user sent a photo or start command and respond accordingly"""
     if message.photo:
         await message.reply("Please send the image as a file.", quote=True)
     else:
@@ -36,208 +40,194 @@ async def start(client, message):
             f"@[{user.username}]" if user.username else "",
         )
 
-        try:
-            printlog(f"{name} {username} [{id}] started the bot.")
-        except Exception:
-            printlog(f"{id} started the bot.")
-            
+        printlog(f"{name} {username} [{id}] started the bot.")
+
         # Send a greeting message to the user
         await message.reply(
-            "Hello! Send me a wallpaper that you want to submit as a document.", quote=True
+            "Hello! Send me a wallpaper that you want to submit as a document.",
+            quote=True,
         )
 
-@app.on_message(filters.document & ~filters.channel)
+
+@app.on_message(filters.document & ~filters.channel & ~filters.user(admin_list))
 async def handle_document(client, message):
+    """ Don't respond if the document is not a picture """
+    if not message.document.file_name.lower().endswith(
+        (".png", ".jpg", ".jpeg", ".jfif")
+    ):
+        return
+
     """ User information """
     user = message.from_user
-    u_name, u_id, username = (
+    user_name, user_id, username = (
         user.first_name,
         user.id,
         f"[@{user.username}]" if user.username else "",
     )
 
     """ Stop execution if user is in ignore list """
-    if u_id in ignore_list:
+    if user_id in ignore_list:
         await asyncio.sleep(randint(1, 5))
         await message.reply(
-            f"Sorry for the inconvenience. You are not allowed to send wallpapers. If you think this is a mistake, you can appeal in {group_username}", quote=True
+            f"Sorry for the inconvenience. You are not allowed to send wallpapers. If you think this is a mistake, you can appeal in {group_username}",
+            quote=True,
         )
         return
 
-    """ Anti-Spam Check to process one file at a time from one user """
-    #if u_id in recent_users:
-        #await asyncio.sleep(4)
-        #return await message.reply("Send one wallpaper at a time.", quote=True)
-    #else:
-        #recent_users.append(u_id)
-
-    try:
-        printlog(f"{u_name} {username} [{u_id}] sent a document.")
-    except Exception:
-        printlog(f"{u_id} sent a document.")
-
-    await asyncio.sleep(randint(1,8))
-    response = await message.reply("Added to queue. Please wait.", quote=True)
-
-    """ Check if the user has Admin privileges """
-    if u_id in admin_list:
-        isadmin = True
-    else:
-        isadmin = False
-
+    if user_id not in users_dict:
+        add_user(user_id)
+    check_user = check_perm(user_id)
+    if not check_user:
+        return await message.reply(
+            "You've already submitted 5 posts today.\nWait 24 hours before you can send more"
+        )
+    users_dict[user_id]["counter"] += 1
     if message.document.file_name in files_list:
-        if not isadmin:
-            await response.edit(
-                "This wallpaper cannot be posted because it is already posted. If you think this is a mistake, you can change it's file name and send it again."
-            )
-            return
+        await message.reply(
+            "This wallpaper cannot be posted because it is already posted. If you think this is a mistake, you can change it's file name and send it again.",
+            quote=True,
+        )
+        return
     else:
         files_list.append(message.document.file_name)
+    await message.copy(
+        chat_id=request_id,
+        caption=f"Check the wallpaper and resend to bot.\n\nSent By [ <a href='tg://user?id={user_id}'>{user_id}</a> ]",
+    )
+    await asyncio.sleep(randint(1, 8))
+    await message.reply(
+        "Thank you for your submission. Please wait for the verification.",
+        quote=True,
+    )
+    printlog(f"{user_name} {username} [{user_id}] made a wallpaper request.")
 
-    """ If the user is Admin then queue the post otherwise send the document for verification """
-    if isadmin:
-        file_name = message.document.file_name
-        download_path = os.path.join("downloads", str(time()))
-        file_path = os.path.join(download_path, file_name)
-        await message.download(file_path)
-        ImageFile.LOAD_TRUNCATED_IMAGES = True
-        img = Image.open(file_path)
-        if img.width > img.height:
-            tag = "#desktop"
-        elif img.width < img.height:
-            tag = "#mobile"
-        else:
-            tag = "#universal"
-        await response.edit("Processing...")
-        post_list.append(
-            {
-                "response": response,
-                "path": download_path,
-                "file_path": file_path,
-                "caption": tag,
-                "document": message,
-                "file_name": file_name
-            }
-        )
 
-        try:
-            printlog(f"{u_name} {username} [{u_id}] posted a wallpaper.")
-        except Exception:
-            printlog(f"{u_id} posted a wallpaper.")
-    else:
-        # upload = await gofiles(file_path)
-        # if upload == "failed":
-        # return await response.edit(
-        # "An error occurred with Gofile.io.\nPlease try again."
-        # )
-        await asyncio.sleep(2)
-        await message.copy(
-            chat_id=request_id, caption=f"Check the wallpaper and resend to bot.\n\nSent By <a href='tg://user?id={u_id}'>{u_name}</a> [{u_id}]"
-        )
-        await asyncio.sleep(2)
-        await response.edit(
-            "Thank you for your submission. Please wait for the verification."
-        )
+def add_user(user):
+    users_dict[user] = {}
+    users_dict[user]["time"] = datetime.now()
+    users_dict[user]["counter"] = 0
 
-        try:
-            printlog(f"{u_name} {username} [{u_id}] made a wallpaper request.")
-        except Exception:
-            printlog(f"{u_id} made a wallpaper request.")
-    #recent_users.remove(u_id)
+
+def check_perm(user):
+    day = (datetime.now() - users_dict[user]["time"]).days
+    if day >= 1:
+        users_dict[user]["counter"] = 0
+        users_dict[user]["time"] = datetime.now()
+    if users_dict[user]["counter"] == 5:
+        return False
+    return True
+
+
+""" Admin section """
 
 
 @app.on_message(filters.command("restart", prefixes="/") & filters.user(admin_list))
 async def restart(client, message):
-    """ Stop Scheduler and Restart bot when an Admin sends a restart command. """
+    """Stop Scheduler and Restart bot when an Admin sends a restart command."""
     scheduler.shutdown()
     os.execl(sys.executable, sys.executable, __file__)
-    
+
+
+@app.on_message(filters.document & filters.private & filters.user(admin_list))
+@app.on_message(filters.command("post", prefixes="/") & filters.user(admin_list))
+async def add_post(app, message):
+    reply = message.reply_to_message
+    if message.chat.type == ChatType.PRIVATE:
+        post_list.append({"document": message})
+        await asyncio.sleep(randint(1, 8))
+    else:
+        if reply and message.text == "/post":
+            docs = await app.get_messages(
+                chat_id=message.chat.id,
+                message_ids=[i for i in range(reply.id, message.id)],
+            )
+            [
+                post_list.append({"document": msg})
+                for msg in docs
+                if msg.document
+                and msg.document.file_name.lower().endswith(
+                    (".png", ".jpg", ".jpeg", ".jfif")
+                )
+            ]
+        else:
+            return await message.reply("Reply to a document.")
+    await message.reply("Added to Queue")
+    user = message.from_user
+    user_name, user_id, username = (
+        user.first_name,
+        user.id,
+        f"[@{user.username}]" if user.username else "",
+    )
+    printlog(f"{user_name} {username} [{user_id}] posted a wallpaper.")
+
+
 async def poster():
-    """ The logic function to handle posts without getting interrupted from other submissions """
+    """The logic function to handle posts without getting interrupted from other submissions"""
     if len(post_list) > 0:
         upload, resize = None, None
-        data = post_list[0]
-        file_path, file_name, download_path, caption, response, document = (
-            data["file_path"],
-            data["file_name"],
-            data["path"],
-            data["caption"],
-            data["response"],
-            data["document"],
-        )
+        data = post_list[0]["document"]
+        file_name = data.document.file_name
+        download_path = os.path.join("downloads", str(time()))
+        file_path = os.path.join(download_path, file_name)
+        await data.download(file_path)
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        with Image.open(file_path) as img:
+            if img.width > img.height:
+                caption = "#desktop"
+            elif img.width < img.height:
+                caption = "#mobile"
+            else:
+                caption = "#universal"
         try:
             await app.send_photo(chat_id=post_id, photo=file_path, caption=caption)
             await asyncio.sleep(3)
         except (PhotoInvalidDimensions, PhotoSaveFileInvalid):
-            resize = await resizer(file=file_path,name=file_name)
+            resize = await resizer(file=file_path, name=file_name)
             await app.send_photo(chat_id=post_id, photo=resize, caption=caption)
             await asyncio.sleep(3)
-        await document.copy(chat_id=post_id, caption="")
-        await response.edit("Wallpaper posted.")
+        await data.copy(chat_id=post_id, caption="")
         if os.path.exists(download_path):
             rmtree(download_path)
         post_list.pop(0)
 
+
 async def resizer(file, name):
-    """ Resize Photo to fit Telegram's size restrictions """
-    img = Image.open(file).convert("RGB")
-    comp_file = BytesIO()
-    if img.width > img.height:
-        tag = "#desktop"
-        if img.width > 3840:
-            aspect_ratio = img.width / img.height
-            img = img.resize((3840, int(3840 / aspect_ratio)), Image.LANCZOS)
-        img.save(comp_file, format="JPEG", optimize=True, quality=95)
-    elif img.width < img.height:
-        tag = "#mobile"
-        if img.height > 3840:
-            aspect_ratio = img.height / img.width
-            img = img.resize((int(3840 / aspect_ratio), 3840), Image.LANCZOS)
-        img.save(comp_file, format="JPEG", optimize=True, quality=95)
-    else:
-        tag = "#universal"
-        if img.width > 3840 or img.height > 3840:
-            img = img.resize((3840, 3840), Image.LANCZOS)
-        img.save(comp_file, format="JPEG", optimize=True, quality=95)
-    comp_file.name = name + ".jpeg"
-    return comp_file
+    """Resize Photo to fit Telegram's size restrictions"""
+    with Image.open(file).convert("RGB") as img:
+        comp_file = BytesIO()
+        if img.width > img.height:
+            if img.width > 3840:
+                aspect_ratio = img.width / img.height
+                img = img.resize((3840, int(3840 / aspect_ratio)), Image.LANCZOS)
+            img.save(comp_file, format="JPEG", optimize=True, quality=95)
+        elif img.width < img.height:
+            if img.height > 3840:
+                aspect_ratio = img.height / img.width
+                img = img.resize((int(3840 / aspect_ratio), 3840), Image.LANCZOS)
+            img.save(comp_file, format="JPEG", optimize=True, quality=95)
+        else:
+            if img.width > 3840 or img.height > 3840:
+                img = img.resize((3840, 3840), Image.LANCZOS)
+            img.save(comp_file, format="JPEG", optimize=True, quality=95)
+        comp_file.name = name + ".jpeg"
+        return comp_file
 
 
-"""
-async def gofiles(file_path):
-    try:
-          async with aio_session.request("GET", url="https://api.gofile.io/getServer") as session:
-              status = loads(await session.text())
-          with open(file_path,"rb") as up_file:
-              async with aio_session.request("POST",url=f"https://{status['data']['server']}.gofile.io/uploadFile",data={"key": up_file},) as post_session:
-                  post_link = loads(await post_session.text())["data"]["downloadPage"]
-    except Exception:
-        post_link = "failed"
-    return post_link
-"""
+""" Bot section """
 
 
 async def boot():
-    """ Start bot, setup client session for gofile requests
-        Start Scheduler to call post function every 30 seconds
-       Wait idle to receive commands / submissions
+    """
+    Start bot, setup client session for gofile requests
+    Start Scheduler to call post function every 30 seconds
+    Wait idle to receive commands / submissions
     """
     printlog("Client initialized..")
     await app.start()
-    #global aio_session
-    #aio_session = aiohttp.ClientSession()
-    scheduler.add_job(poster, "interval", seconds=10)
+    scheduler.add_job(poster, "interval", seconds=30)
     scheduler.start()
     printlog("Client Started, Idling....")
     await idle()
-
-
-def is_valid_link(link):
-    try:
-        result = urllib.parse.urlparse(link)
-        return all([result.scheme, result.netloc])
-    except ValueError:
-        return False
 
 
 def printlog(message):
@@ -247,8 +237,11 @@ def printlog(message):
     if not os.path.exists("logs"):
         os.makedirs("logs")
     # Open log file to write log, if file doesn't exist, create one.
-    with open((os.path.join("logs", f"{current_date}.log")), "a+", encoding="utf-8") as log:
+    with open(
+        (os.path.join("logs", f"{current_date}.log")), "a+", encoding="utf-8"
+    ) as log:
         log.write(f"[{current_time}] {message}\n")
+
 
 """ To prevent accidental startup of bot. """
 if __name__ == "__main__":
