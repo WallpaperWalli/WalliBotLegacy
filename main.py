@@ -10,8 +10,8 @@ from time import time
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from PIL import Image, ImageFile
 from pyrogram import Client, filters, idle
-from pyrogram.enums import ChatType
 from pyrogram.errors import PhotoInvalidDimensions, PhotoSaveFileInvalid
+
 from VarFile import *
 
 app = Client(bot_name, api_id, api_hash, bot_token=token, in_memory=True)
@@ -25,45 +25,26 @@ scheduler = AsyncIOScheduler()
 """ User Section """
 
 
-@app.on_message(
-    (filters.command("start", prefixes="/") | filters.photo) & ~filters.channel
-)
+@app.on_message(filters.command("start", prefixes="/") & ~filters.channel)
 async def start(client, message):
-    """Check if a user sent a photo or start command and respond accordingly"""
-    if message.photo:
-        await message.reply("Please send the image as a file.", quote=True)
-    else:
-        user = message.from_user
-        name, id, username = (
-            user.first_name,
-            user.id,
-            f"@[{user.username}]" if user.username else "",
-        )
+    user = message.from_user
+    name, id, username = (user.first_name, user.id, f"@[{user.username}]" if user.username else "")
 
-        printlog(f"{name} {username} [{id}] started the bot.")
+    printlog(f"{name} {username} [{id}] started the bot.")
 
-        # Send a greeting message to the user
-        await message.reply(
-            "Hello! Send me a wallpaper that you want to submit as a document.",
-            quote=True,
-        )
+    # Send a greeting message to the user
+    await message.reply("Hello! Send me a wallpaper that you want to submit as a document.", quote=True)
 
 
 @app.on_message(filters.document & ~filters.channel & ~filters.user(admin_list))
 async def handle_document(client, message):
-    """ Don't respond if the document is not a picture """
-    if not message.document.file_name.lower().endswith(
-        (".png", ".jpg", ".jpeg", ".jfif")
-    ):
+    """Don't respond if the document is not a picture"""
+    if not message.document.file_name.lower().endswith((".png", ".jpg", ".jpeg", ".jfif")):
         return
 
     """ User information """
     user = message.from_user
-    user_name, user_id, username = (
-        user.first_name,
-        user.id,
-        f"[@{user.username}]" if user.username else "",
-    )
+    user_name, user_id, username = (user.first_name, user.id, f"[@{user.username}]" if user.username else "")
 
     """ Stop execution if user is in ignore list """
     if user_id in ignore_list:
@@ -78,9 +59,7 @@ async def handle_document(client, message):
         add_user(user_id)
     check_user = check_perm(user_id)
     if not check_user:
-        return await message.reply(
-            "You've already submitted 5 posts today.\nWait 24 hours before you can send more"
-        )
+        return await message.reply("You've already submitted 5 posts today.\nWait 24 hours before you can send more")
     users_dict[user_id]["counter"] += 1
     if message.document.file_name in files_list:
         await message.reply(
@@ -91,14 +70,10 @@ async def handle_document(client, message):
     else:
         files_list.append(message.document.file_name)
     await message.copy(
-        chat_id=request_id,
-        caption=f"Check the wallpaper and resend to bot.\n\nSent By [ <a href='tg://user?id={user_id}'>{user_id}</a> ]",
+        chat_id=request_id, caption=f"Check the wallpaper and resend to bot.\n\nSent By [ <a href='tg://user?id={user_id}'>{user_id}</a> ]"
     )
     await asyncio.sleep(randint(1, 8))
-    await message.reply(
-        "Thank you for your submission. Please wait for the verification.",
-        quote=True,
-    )
+    await message.reply("Thank you for your submission. Please wait for the verification.", quote=True)
     printlog(f"{user_name} {username} [{user_id}] made a wallpaper request.")
 
 
@@ -128,36 +103,21 @@ async def restart(client, message):
     os.execl(sys.executable, sys.executable, __file__)
 
 
-@app.on_message(filters.document & filters.private & filters.user(admin_list))
 @app.on_message(filters.command("post", prefixes="/") & filters.user(admin_list))
 async def add_post(app, message):
     reply = message.reply_to_message
-    if message.chat.type == ChatType.PRIVATE:
-        post_list.append({"document": message})
-        await asyncio.sleep(randint(1, 8))
+    if reply and message.text == "/post":
+        docs = await app.get_messages(chat_id=message.chat.id, message_ids=[i for i in range(reply.id, message.id)])
+        [
+            post_list.append({"document": msg})
+            for msg in docs
+            if msg.document and msg.document.file_name.lower().endswith((".png", ".jpg", ".jpeg", ".jfif"))
+        ]
     else:
-        if reply and message.text == "/post":
-            docs = await app.get_messages(
-                chat_id=message.chat.id,
-                message_ids=[i for i in range(reply.id, message.id)],
-            )
-            [
-                post_list.append({"document": msg})
-                for msg in docs
-                if msg.document
-                and msg.document.file_name.lower().endswith(
-                    (".png", ".jpg", ".jpeg", ".jfif")
-                )
-            ]
-        else:
-            return await message.reply("Reply to a document.")
+        return await message.reply("Reply to a document.")
     await message.reply("Added to Queue")
     user = message.from_user
-    user_name, user_id, username = (
-        user.first_name,
-        user.id,
-        f"[@{user.username}]" if user.username else "",
-    )
+    user_name, user_id, username = (user.first_name, user.id, f"[@{user.username}]" if user.username else "")
     printlog(f"{user_name} {username} [{user_id}] posted a wallpaper.")
 
 
@@ -237,9 +197,7 @@ def printlog(message):
     if not os.path.exists("logs"):
         os.makedirs("logs")
     # Open log file to write log, if file doesn't exist, create one.
-    with open(
-        (os.path.join("logs", f"{current_date}.log")), "a+", encoding="utf-8"
-    ) as log:
+    with open((os.path.join("logs", f"{current_date}.log")), "a+", encoding="utf-8") as log:
         log.write(f"[{current_time}] {message}\n")
 
 
