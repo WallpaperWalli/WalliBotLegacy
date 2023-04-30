@@ -1,0 +1,5 @@
+pyrogram==2.0.57
+TgCrypto==1.2.3
+pillow==9.5.0
+apscheduler==3.10.1
+python-dotenv==0.21.0
