@@ -19,7 +19,7 @@ if os.path.isfile("VarFile.env"):
 
 app = Client(
     name=os.environ.get("BOT_NAME"),
-    api_id=os.environ.get("API_ID"),
+    api_id=int(os.environ.get("API_ID")),
     api_hash=os.environ.get("API_HASH"),
     bot_token=os.environ.get("BOT_TOKEN"),
     in_memory=True,
@@ -28,9 +28,9 @@ files_list = []
 post_list = []
 users_dict = {}
 scheduler = AsyncIOScheduler()
-post_id = os.environ.get("POST_ID")
-admin_list = json.loads(os.environ.get("ADMIN_LIST",""))
-ignore_list = json.loads(os.environ.get("IGNORE_LIST",""))
+post_id = int(os.environ.get("POST_ID"))
+admin_list = list(map(int, os.environ.get("ADMIN_LIST","").split()))
+ignore_list = list(map(int, os.environ.get("IGNORE_LIST","").split()))
 group_username = os.environ.get("GROUP_USERNAME", "")
 
 # User Section 
@@ -61,7 +61,7 @@ async def handle_document(client, message):
     if user_id in ignore_list:
         await asyncio.sleep(randint(1, 5))
         await message.reply(
-            f"Sorry for the inconvenience. You are not allowed to send wallpapers. If you think this is a mistake, you can appeal in {group_username}",
+            f"Sorry for the inconvenience. You are not allowed to send wallpapers. If you think this is a mistake, you can appeal in @{group_username}",
             quote=True,
         )
         return
@@ -81,7 +81,7 @@ async def handle_document(client, message):
     else:
         files_list.append(message.document.file_name)
     await message.copy(
-        chat_id=os.environ.get("REQUEST_ID"),
+        chat_id=int(os.environ.get("REQUEST_ID")),
         caption=f"Check the wallpaper and resend to bot.\n\nSent By [ <a href='tg://user?id={user_id}'>{user_id}</a> ]",
     )
     await asyncio.sleep(randint(1, 8))
