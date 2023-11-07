@@ -29,8 +29,8 @@ post_list = []
 users_dict = {}
 scheduler = AsyncIOScheduler()
 post_id = os.environ.get("POST_ID")
-admin_list = json.loads(os.environ.get("ADMIN_LIST",""))
-ignore_list = json.loads(os.environ.get("IGNORE_LIST",""))
+admin_list = os.environ.get("ADMIN_LIST","").split()
+ignore_list = os.environ.get("IGNORE_LIST","").split()
 group_username = os.environ.get("GROUP_USERNAME", "")
 
 # User Section 
