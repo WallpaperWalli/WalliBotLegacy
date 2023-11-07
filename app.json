@@ -13,11 +13,11 @@
       "value": "eb06d4abfb49dc3eeb1aeb98ae0f581e"
     },
     "ADMIN_LIST": {
-      "description": "List of Admins separated, by space",
+      "description": "List of numerical IDs of Admins separated, by space",
       "value": ""
     },
     "IGNORE_LIST": {
-      "description": "List of Users to be ignored by bot, separated by space",
+      "description": "List of numerical IDs of Users to be ignored by bot, separated by space",
       "value": ""
     },
     "BOT_TOKEN": {
@@ -25,15 +25,15 @@
       "value": ""
     },
     "REQUEST_ID": {
-      "description": "ID of Group of Admins",
+      "description": "Numerical ID of Group of Admins starting with -100",
       "value": ""
     },
     "POST_ID": {
-      "description": "Channel/Group ID",
+      "description": "Channel/Group ID starting with -100",
       "value": ""
     },
     "GROUP_USERNAME": {
-      "description": "Group Username",
+      "description": "Group Username without '@'",
       "value": ""
     },
    "BOT_NAME": {
