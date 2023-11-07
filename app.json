@@ -1,0 +1,44 @@
+{
+  "name": "WalliBot",
+  "description": "A simple bot based on Pyrogram to handle wallpapers sent by users.",
+  "logo": "https://graph.org/file/da42f3541a5aeb25a4719.jpg",
+  "repository": "https://github.com/WallpaperWalli/WalliBot",
+  "env": {
+    "API_ID": {
+      "description": "Get this value from my.telegram.org or you can leave it as it is",
+      "value": "6"
+    },
+    "API_HASH": {
+      "description": "Get this value from my.telegram.org or you can leave it as it is",
+      "value": "eb06d4abfb49dc3eeb1aeb98ae0f581e"
+    },
+    "ADMIN_LIST": {
+      "description": "List of Admins separated, by space",
+      "value": ""
+    },
+    "IGNORE_LIST": {
+      "description": "List of Users to be ignored by bot, separated by space",
+      "value": ""
+    },
+    "BOT_TOKEN": {
+      "description": "Telegram Bot token from t.me/Botfather",
+      "value": ""
+    },
+    "REQUEST_ID": {
+      "description": "ID of Group of Admins",
+      "value": ""
+    },
+    "POST_ID": {
+      "description": "Channel/Group ID",
+      "value": ""
+    },
+    "GROUP_USERNAME": {
+      "description": "Group Username",
+      "value": ""
+    },
+   "BOT_NAME": {
+      "description": "Any name for your bot",
+      "value": ""
+    }
+  }
+}
